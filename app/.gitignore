@@ -1,1 +1,5 @@
 /build
+/compose_metrics/app_debug-classes.txt
+/compose_metrics/app_debug-composables.csv
+/compose_metrics/app_debug-composables.txt
+/compose_metrics/app_debug-module.json

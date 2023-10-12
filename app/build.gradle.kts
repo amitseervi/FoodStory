@@ -4,6 +4,9 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.kapt)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -12,13 +15,18 @@ android {
 
     signingConfigs {
         val secretProperties = Properties()
-        secretProperties.load(File(rootDir,"secrets/keystore_credentials.properties").bufferedReader())
-        create("release"){
-            this.storeFile = File(rootDir,"secrets/keystore.jks")
-            this.enableV4Signing=true
-            this.keyAlias=secretProperties.getProperty("release.open.key")
-            this.keyPassword=secretProperties.getProperty("release.open.password")
-            this.storePassword=secretProperties.getProperty("release.open.keystore_pass")
+        secretProperties.load(
+            File(
+                rootDir,
+                "secrets/keystore_credentials.properties"
+            ).bufferedReader()
+        )
+        create("release") {
+            this.storeFile = File(rootDir, "secrets/keystore.jks")
+            this.enableV4Signing = true
+            this.keyAlias = secretProperties.getProperty("release.open.key")
+            this.keyPassword = secretProperties.getProperty("release.open.password")
+            this.storePassword = secretProperties.getProperty("release.open.keystore_pass")
         }
     }
 
@@ -33,11 +41,16 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas")
+            arg("room.incremental", "true")
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -46,17 +59,26 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
+        val outputDir = File(project.projectDir, "compose_metrics").path
+        freeCompilerArgs += listOf(
+            "-P",
+            "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$outputDir"
+        )
+        freeCompilerArgs += listOf(
+            "-P",
+            "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$outputDir"
+        )
     }
     buildFeatures {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
+        kotlinCompilerExtensionVersion = "1.5.3"
     }
     packaging {
         resources {
@@ -82,4 +104,22 @@ dependencies {
     androidTestImplementation(libs.ui.test.junit4)
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
+
+
+    implementation(libs.collections.immutable)
+    implementation(libs.timber)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.coil.kt.compose)
+    implementation(libs.accompanist.systemuicontroller)
+    implementation(libs.hilt.android)
+    implementation(libs.hilt.work)
+    ksp(libs.androidx.room.compiler)
+    kapt(libs.hilt.compiler)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.lifecycle.viewModel.compose)
+}
+
+kapt {
+    correctErrorTypes = true
 }
